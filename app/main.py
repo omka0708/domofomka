@@ -1,5 +1,4 @@
 import sqlite3
-import re
 import os
 
 from fastapi import FastAPI, Query
@@ -13,29 +12,48 @@ app = FastAPI()
 dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 
-def regexp(value: str, pattern: str) -> bool:
-    return re.compile(pattern.lower()).search(value.lower()) is not None
+def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
+    msg, city, street, house = msg.lower(), city.lower(), street.lower(), house.lower()
+    if msg.count(street) == 1:
+        msg = msg.replace(street, '').strip().replace('  ', ' ')
+        if msg.count(house) == 1:
+            msg = msg.replace(house, '').strip().replace('  ', ' ')
+            if msg:  # msg have something more than street and house
+                if street_type in msg:  # it is probably street type
+                    msg = msg.replace(street_type, '').strip()
+                res = msg in city  # if there is anything left in msg, it must be in city
+            else:
+                res = True
+        else:
+            res = False
+    else:
+        res = False
+    return res
 
 
-def get_data_from_db(msg: str, db_name: str) -> dict:
-    pattern = '^.*' + '.* '.join(msg.split()) + '$'
+def get_data_from_db(msg: str) -> dict:
     res = {}
+    if not msg:
+        return res
     with sqlite3.connect(os.getenv('DB_NAME')) as connection:
         cursor = connection.cursor()
-        connection.create_function("regexp", 2, regexp)
-        query_find_first = f"select address from {db_name} where regexp ({db_name}.address, '{pattern}') limit 1"
-        cursor.execute(query_find_first)
-        address = cursor.fetchone()
-        if address:
-            address = address[0]
-            query_find_all = f"select entrance, code from {db_name} where {db_name}.address == '{address}'"
-            cursor.execute(query_find_all)
-            data = cursor.fetchall()
-            if data:
-                res['address'] = address
-                for ent, code in data:
+        connection.create_function("address_exists", 5, address_exists)
+        query = f'''
+            select * 
+                from codes 
+                    where address_exists('{msg}', city, street, house, street_type)
+        '''
+        data = cursor.execute(query).fetchall()
+        if data:
+            shortest_city = data[0][1]
+            for _id, city, *args in data:
+                if len(city) < len(shortest_city):
+                    shortest_city = city
+            for _id, city, street_type, street, house, entrance, code_type, code in data:
+                if shortest_city in city:
+                    res.setdefault('address', f"{shortest_city}, {street_type} {street}, дом {house}")
                     res.setdefault('data', {})
-                    res['data'].setdefault(ent, []).append(code)
+                    res['data'].setdefault(entrance, []).append((code, code_type))
     return res
 
 
@@ -51,24 +69,12 @@ def get_address_by_geo(lat: float, lon: float) -> str | None:
     return address
 
 
-def get_empty_result() -> dict:
-    return {'yaeda': {}, 'delivery': {}, 'oldcodes': {}}
-
-
 @app.get("/codes_msg")
 async def get_codes_by_message(message: Annotated[str, Query(min_length=7, max_length=50)]) -> dict:
-    result = {'yaeda': get_data_from_db(message, 'yaeda'),
-              'delivery': get_data_from_db(message, 'delivery'),
-              'oldcodes': get_data_from_db(message, 'oldcodes')}
-    return result
+    return get_data_from_db(message)
 
 
 @app.get("/codes_geo")
 async def get_codes_by_geo(lat: float, lon: float) -> dict:
     address = get_address_by_geo(lat, lon)
-    result = get_empty_result()
-    if address:
-        result = {'yaeda': get_data_from_db(address, 'yaeda'),
-                  'delivery': get_data_from_db(address, 'delivery'),
-                  'oldcodes': get_data_from_db(address, 'oldcodes')}
-    return result
+    return get_data_from_db(address)
