@@ -13,7 +13,10 @@ dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
-    msg, city, street, house = msg.lower(), city.lower(), street.lower(), house.lower()
+    msg = msg.lower().replace('ё', 'е').replace(',', '')
+    city = city.lower().replace('ё', 'е').replace(',', '')
+    street = street.lower().replace('ё', 'е').replace(',', '')
+    house = house.lower()
     if msg.count(street) == 1:
         msg = msg.replace(street, '').strip().replace('  ', ' ')
         if msg.count(house) == 1:
@@ -63,14 +66,14 @@ def get_address_by_geo(lat: float, lon: float) -> str | None:
     if houses:
         house_data = houses[0]['data']
         if house_data['street']:
-            address = f"{house_data['region']} {house_data['street']} {house_data['house']}"
+            address = f"{house_data['city']} {house_data['street']} {house_data['house']}"
             if house_data['block']:
                 address += house_data['block_type'].replace('стр', 'с') + house_data['block'].replace(' стр ', 'с')
     return address
 
 
 @app.get("/codes_msg")
-async def get_codes_by_message(message: Annotated[str, Query(min_length=7, max_length=50)]) -> dict:
+async def get_codes_by_message(message: Annotated[str, Query(min_length=7, max_length=100)]) -> dict:
     return get_data_from_db(message)
 
 
