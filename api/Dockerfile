@@ -2,8 +2,11 @@ FROM python:3.10.4
 
 WORKDIR /api
 
+ARG DB_NAME
+ENV DB_NAME=$DB_NAME
+
 COPY ./requirements.txt /api/requirements.txt
-COPY ./codes.db /api/codes.db
+COPY ./${DB_NAME} /api/${DB_NAME}
 
 RUN pip install --no-cache-dir --upgrade -r /api/requirements.txt
 

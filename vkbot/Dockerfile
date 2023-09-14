@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir --upgrade -r /vkbot/requirements.txt
 
 COPY ./main.py /vkbot/main.py
 
-CMD ["python", "main.py"]
+CMD ["python", "-u", "main.py"]
