@@ -1,23 +1,26 @@
-# domofomka-api
+# domofomka
 
-This is an API for getting the intercom code at the given address.
+Application for getting the intercom code at the given address.
+Used stack: *FastAPI*, *SQLite*, *Redis*.
 
 ## Install
 
-Build `domofomka-api` from source:
+Build `domofomka` from source:
 
-    git clone https://github.com/omka0708/domofomka-api
-    cd domofomka-api
-    docker build -t domofomka-api .
+    git clone https://github.com/omka0708/domofomka
+    cd domofomka
+    docker compose up -d
 
-You should have also `codes.db` and `.env` files in the `domofomka-api` folder.
+You should have `.env` file at the */domofomka* folder and SQLite3 database with `DB_NAME` name (configured in environment file) at */domofomka/api* folder.
 
 Environment file `.env` should contain:
     
     DB_NAME=<database_name>
-    DADATA_TOKEN=<token>
+    DADATA_TOKEN=<dadata_token>
+    VK_GROUP_TOKEN=<vk_group_token>
+    VK_GROUP_ID=<vk_group_id>
 
-Database should contain table `codes`, that has the structure:
+Your SQLite3 database should contain table `codes`, that has the structure:
 
     "id" INTEGER,
     "city" TEXT,
@@ -30,12 +33,11 @@ Database should contain table `codes`, that has the structure:
     
 ## Run
 
-Run the image, binding associated ports, and mounting the present working directory:
+Run this command at the working directory */domofomka*:
 
-    docker run -d --name domofomka-api -p 80:80 domofomka-api
+    docker compose up --build
 
-## Usage
-
+## API
 ### Get codes by message
 #### Request
 
@@ -75,5 +77,15 @@ Run the image, binding associated ports, and mounting the present working direct
         "6":[["200К4578","yaeda"],["200К4578","delivery"]]
         }
     }
+    
+## VK Bot
+### Get codes by message
+![codes_by_msg](https://github.com/omka0708/domofomka/assets/56554057/d21e6146-95a7-4f09-a501-31d8fd2ae7df)
 
+### Get codes by latitude and longitude
+![codes_by_lat_lon](https://github.com/omka0708/domofomka/assets/56554057/85f2b4f6-7634-4b3a-b7a7-5ae10cdc9219)
+
+## Telegram Bot
+
+*soon*
 
