@@ -106,7 +106,7 @@ while True:
                             message_ids=msg_id
                         )['items'][0]['conversation_message_id']
                         r.set(f"vk:user:{event.obj.message['from_id']}:message:{conversation_message_id}",
-                              value=str(result).replace("\'", "\""), ex=300)
+                              value=str(result).replace("\'", "\""), ex=os.getenv('CACHE_EXPIRE_TIME'))
 
             elif event.type == VkBotEventType.MESSAGE_EVENT:
 
@@ -162,9 +162,9 @@ while True:
                         })
                     )
 
-                    r.set(f'vk:user:{event.obj.user_id}:action', 'button_tap', ex=9)
+                    r.set(f'vk:user:{event.obj.user_id}:action', 'button_tap', ex=os.getenv('ANTI_SPAM_TIME'))
                     r.set(f"vk:user:{str(event.obj.user_id)}:message:{event.obj['conversation_message_id']}",
-                          value=str(result).replace("\'", "\""), ex=300)
+                          value=str(result).replace("\'", "\""), ex=os.getenv('CACHE_EXPIRE_TIME'))
 
     except requests.exceptions.ReadTimeout:
         time.sleep(3)

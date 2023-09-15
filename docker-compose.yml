@@ -14,10 +14,12 @@ services:
   vkbot:
     build: vkbot/
     container_name: domofomka-vkbot
-    # restart: always
+    restart: always
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CACHE_EXPIRE_TIME=1200
+      - ANTI_SPAM_TIME=5
       - DOMOFOMKA_API_HOST=api
       - DOMOFOMKA_API_PORT=80
       - VK_GROUP_TOKEN=${VK_GROUP_TOKEN}
