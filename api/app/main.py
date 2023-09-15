@@ -10,7 +10,7 @@ dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
-    msg = msg.lower().replace('ё', 'е').replace(',', '')
+    msg = msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ')
     city = city.lower().replace('ё', 'е').replace(',', '')
     street = street.lower().replace('ё', 'е').replace(',', '')
     house = house.lower()
