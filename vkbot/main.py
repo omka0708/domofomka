@@ -51,17 +51,24 @@ while True:
         for event in long_poll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
 
-                if not vk.groups.isMember(group_id=os.getenv('VK_GROUP_ID'), user_id=event.obj.message['from_id']):
-                    continue
-
                 if event.obj.message['text'].lower() == 'начать':
                     vk.messages.send(
                         user_id=event.obj.message['from_id'],
                         random_id=get_random_id(),
                         message='Введи город (не обязательно), улицу и номер дома или отправь геолокацию. '
-                                'Перед этим нужно подписаться на группу.',
+                                'Перед этим нужно подписаться на группу.'
+                                '\nНапример:\n\nВернадского 105к2\nКоролев, улица Мичурина, дом 21',
                         keyboard=keyboard.get_keyboard()
                     )
+                    continue
+                elif not vk.groups.isMember(group_id=os.getenv('VK_GROUP_ID'), user_id=event.obj.message['from_id']):
+                    vk.messages.send(
+                        user_id=event.obj.message['from_id'],
+                        random_id=get_random_id(),
+                        message='Нет подписки на группу',
+                        keyboard=keyboard.get_keyboard()
+                    )
+                    continue
 
                 response = ''
                 if 'geo' in event.obj.message:
