@@ -10,7 +10,8 @@ dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
-    msg = msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ')
+    msg = (msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ').
+           replace(' строение ', 'с').replace(' корпус ', 'к'))
     city = city.lower().replace('ё', 'е').replace(',', '')
     street = street.lower().replace('ё', 'е').replace(',', '')
     house = house.lower()
@@ -21,7 +22,11 @@ def address_exists(msg: str, city: str, street: str, house: str, street_type: st
             if msg:  # msg have something more than street and house
                 if street_type in msg:  # it is probably street type
                     msg = msg.replace(street_type, '').strip()
-                res = msg in city  # if there is anything left in msg, it must be in city
+                res = True
+                for remaining_word in msg.split():  # if there is anything left in msg, it must be in city
+                    if remaining_word not in city or len(remaining_word) < 4:
+                        res = False
+                        break
             else:
                 res = True
         else:
@@ -44,6 +49,7 @@ def get_data_from_db(msg: str) -> dict:
                     where address_exists('{msg}', city, street, house, street_type)
         '''
         data = cursor.execute(query).fetchall()
+        print(data)
         if data:
             shortest_city = data[0][1]
             for _id, city, *args in data:
