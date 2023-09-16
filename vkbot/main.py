@@ -55,9 +55,7 @@ while True:
                     vk.messages.send(
                         user_id=event.obj.message['from_id'],
                         random_id=get_random_id(),
-                        message='Введи город (не обязательно), улицу и номер дома или отправь геолокацию. '
-                                'Перед этим нужно подписаться на группу.'
-                                '\nНапример:\n\nВернадского 105к2\nКоролев, улица Мичурина, дом 21',
+                        message=open('start_message.txt', 'r', encoding='utf8').read(),
                         keyboard=keyboard.get_keyboard()
                     )
                     continue
