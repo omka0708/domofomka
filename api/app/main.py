@@ -11,17 +11,17 @@ dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
     msg = (msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ').
-           replace(' строение ', 'с').replace(' корпус ', 'к'))
-    city = city.lower().replace('ё', 'е').replace(',', '')
-    street = street.lower().replace('ё', 'е').replace(',', '')
-    house = house.lower()
+           replace('строение', 'с').replace('корпус', 'к').replace(' ', ''))
+    city = city.lower().replace('ё', 'е').replace(',', '').replace(' ', '')
+    street = street.lower().replace('ё', 'е').replace(',', '').replace(' ', '')
+    house = house.lower().replace(' ', '')
     if msg.count(street) == 1:
-        msg = msg.replace(street, '').strip().replace('  ', ' ')
+        msg = msg.replace(street, '')
         if msg.count(house) == 1:
-            msg = msg.replace(house, '').strip().replace('  ', ' ')
+            msg = msg.replace(house, '')
             if msg:  # msg have something more than street and house
                 if street_type in msg:  # it is probably street type
-                    msg = msg.replace(street_type, '').strip()
+                    msg = msg.replace(street_type, '')
                 res = True
                 for remaining_word in msg.split():  # if there is anything left in msg, it must be in city
                     if remaining_word not in city or len(remaining_word) < 4:
@@ -49,7 +49,6 @@ def get_data_from_db(msg: str) -> dict:
                     where address_exists('{msg}', city, street, house, street_type)
         '''
         data = cursor.execute(query).fetchall()
-        print(data)
         if data:
             shortest_city = data[0][1]
             for _id, city, *args in data:
