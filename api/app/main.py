@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import re
 
 from fastapi import FastAPI, Query
 from typing import Annotated
@@ -10,11 +11,12 @@ dadata = Dadata(os.getenv('DADATA_TOKEN'))
 
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
-    msg = (msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ').
-           replace('строение', 'с').replace('корпус', 'к').replace(' ', ''))
-    city = city.lower().replace('ё', 'е').replace(',', '').replace(' ', '')
-    street = street.lower().replace('ё', 'е').replace(',', '').replace(' ', '')
-    house = house.lower().replace(' ', '')
+    msg = (msg.lower().replace('ё', 'е').replace(' дом ', ' ').
+           replace('строение', 'с').replace('корпус', 'к'))
+    msg, city, street, house = map(
+        lambda x: re.sub(r'\W', '', x).lower().replace('ё', 'е'),
+        [msg, city, street, house]
+    )
     if msg.count(street) == 1:
         msg = msg.replace(street, '')
         if msg.count(house) == 1:
