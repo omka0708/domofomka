@@ -49,13 +49,13 @@ async def get_data_from_db(msg: str) -> dict:
     if not msg:
         return res
 
-    msg_array = msg.split()
+    msg_array = re.split(r"[^а-я]", msg)
+
     for street_type in street_types:
         if street_type in msg_array:
             msg_array.remove(street_type)
 
     longest_word = max(msg_array, key=len).lower()
-    longest_word = re.sub(r'[^а-я]', '', longest_word)
 
     async with aiosqlite.connect(os.getenv('DB_NAME')) as connection:
         await connection.create_function("street_or_city_exists", 3, street_or_city_exists)
