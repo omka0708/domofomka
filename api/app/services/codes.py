@@ -4,20 +4,23 @@ import aiosqlite
 import dadata
 
 dadata = dadata.DadataAsync(os.getenv('DADATA_TOKEN'))
+street_types = ['улица' 'проспект', 'микрорайон', 'переулок', 'жилой комплекс', 'бульвар', 'тракт', 'поселок', 'проезд',
+                'шоссе', 'аллея', 'площадь', 'набережная', 'квартал', 'территория', 'деревня', 'военный городок',
+                'жилой массив', 'тупик']
 
 
 def address_exists(msg: str, city: str, street: str, house: str, street_type: str) -> bool:
     msg = ((msg.lower().replace('ё', 'е').replace(',', '').replace(' дом ', ' ').
-           replace('строение', 'с').replace('корпус', 'к').replace(' ', ''))
+            replace('строение', 'с').replace('корпус', 'к').replace(' ', ''))
            .replace('-', ''))
     city = re.sub(r'\W', '', city).lower()
     street = street.lower().replace(',', '').replace('-', '').replace('  ', ' ')
     street_split = street.split()
     house = house.lower()
 
-    if all(msg.count(word) == 1 for word in street_split):
+    if all(word in msg for word in street_split):
         for word in street_split:
-            msg = msg.replace(word, '')
+            msg = msg.replace(word, '', 1)
         if msg.count(house) == 1:
             msg = msg.replace(house, '')
             if msg:  # msg have something more than street and house
@@ -37,22 +40,29 @@ def address_exists(msg: str, city: str, street: str, house: str, street_type: st
     return res
 
 
-def street_exists(word: str, street: str):
-    return word in street.lower()
+def street_or_city_exists(word: str, city: str, street: str):
+    return word in city.lower() or word in street.lower()
 
 
 async def get_data_from_db(msg: str) -> dict:
     res = {}
     if not msg:
         return res
-    longest_word = max(msg.split(), key=len).lower()
+
+    msg_array = msg.split()
+    for street_type in street_types:
+        if street_type in msg_array:
+            msg_array.remove(street_type)
+
+    longest_word = max(msg_array, key=len).lower()
     longest_word = re.sub(r'[^а-я]', '', longest_word)
+
     async with aiosqlite.connect(os.getenv('DB_NAME')) as connection:
-        await connection.create_function("street_exists", 2, street_exists)
+        await connection.create_function("street_or_city_exists", 3, street_or_city_exists)
         query_street = f'''
             select *
                 from codes
-                    where street_exists('{longest_word}', street)
+                    where street_or_city_exists('{longest_word}', city, street)
         '''
         data = []
         connection.row_factory = aiosqlite.Row
